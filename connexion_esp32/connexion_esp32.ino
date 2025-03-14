@@ -1,60 +1,63 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include "DHT.h"  // Pour le capteur DHT
+#include "esp_wpa2.h"  
 
-#define DHTPIN 4       // Broche du capteur DHT
-#define DHTTYPE DHT11  // Type de capteur (DHT11 ou DHT22)
-DHT dht(DHTPIN, DHTTYPE);
+// Identifiants du Wi-Fi WPA2-Enterprise
+const char* ssid = "OMNES Education";
+const char* identity = "khadidiatou.ascofare@edu.ece.fr";  
+const char* password = "5W2j_-n1j";
 
-// 🛜 Identifiants Wi-Fi
-const char* ssid = "TON_SSID";  // Remplace avec ton réseau Wi-Fi
-const char* password = "TON_MOT_DE_PASSE";
+// Adresse de ton serveur FastAPI
+const char* serverUrl = "http://10.5.24.231:8000/data";  
 
-// 🌐 Adresse du serveur FastAPI (met l'IP du PC si sur le même réseau)
-const char* serverUrl = "http://192.168.1.100:8000/data";  
+// 🌱 Définition du capteur moisture
+#define MOISTURE_SENSOR_PIN 34  // Broche où est branché le capteur
 
 void setup() {
     Serial.begin(115200);
-    dht.begin();
+    
+    WiFi.disconnect(true);
+    delay(1000);
 
-    // 📡 Connexion Wi-Fi
-    WiFi.begin(ssid, password);
-    Serial.print("Connexion à Wi-Fi...");
+    WiFi.mode(WIFI_STA);
+    esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)identity, strlen(identity));  
+    esp_wifi_sta_wpa2_ent_set_username((uint8_t*)identity, strlen(identity));  
+    esp_wifi_sta_wpa2_ent_set_password((uint8_t*)password, strlen(password));  
+    esp_wifi_sta_wpa2_ent_enable();
+
+    WiFi.begin(ssid);
+    Serial.print("Connexion à ");
+    Serial.print(ssid);
+
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
     }
-    Serial.println("\n✅ Connecté à Wi-Fi !");
-    Serial.println(WiFi.localIP());  // Affiche l'IP de l'ESP32
+    
+    Serial.println("\nConnecté !");
+    Serial.println("Adresse IP : " + WiFi.localIP().toString());
 }
 
 void loop() {
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
         
-        // 🔹 Lecture des données du capteur
-        float temperature = dht.readTemperature();
-        float moisture = dht.readMoisture();
-
-        if (isnan(temperature) || isnan(moisture)) {
-            Serial.println("❌ Erreur de lecture du capteur !");
-            return;
-        }
-
-        // 📦 Création du JSON
+        // Lecture du capteur de moisture
+        int moistureValue = analogRead(MOISTURE_SENSOR_PIN);
+        
+        // Création du JSON
         StaticJsonDocument<200> jsonDoc;
-        jsonDoc["temperature"] = temperature;
-        jsonDoc["moisture"] = moisture;
+        jsonDoc["moisture"] = moistureValue;
         String jsonString;
         serializeJson(jsonDoc, jsonString);
 
-        // 🌍 Envoi de la requête HTTP POST
+        // Envoi de la requête HTTP POST
         http.begin(serverUrl);
         http.addHeader("Content-Type", "application/json");
         int httpResponseCode = http.POST(jsonString);
 
-        // 📊 Affichage de la réponse
+        // Affichage de la réponse
         Serial.print("Réponse HTTP: ");
         Serial.println(httpResponseCode);
         Serial.println(http.getString());
