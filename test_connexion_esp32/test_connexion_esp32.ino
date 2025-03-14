@@ -2,7 +2,7 @@
 #include <HTTPClient.h>
 
 const char* ssid = "iPhone 13 Pro de Ines";  
-const char* password = "honeyy45";
+const char* password = "code";
 const char* server_url = "http://10.5.24.231:8000/data";  
 
 void setup() {
