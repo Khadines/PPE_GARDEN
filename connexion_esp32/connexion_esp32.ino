@@ -1,32 +1,22 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include "esp_wpa2.h"  
 
-// Identifiants du Wi-Fi WPA2-Enterprise
-const char* ssid = "OMNES Education";
-const char* identity = "khadidiatou.ascofare@edu.ece.fr";  
-const char* password = "5W2j_-n1j";
+// Identifiants du Wi-Fi 
+const char* ssid = "iPhone 13 Pro de Ines";
+const char* password = "honeyy45";  
 
 // Adresse de ton serveur FastAPI
 const char* serverUrl = "http://10.5.24.231:8000/data";  
 
-// 🌱 Définition du capteur moisture
-#define MOISTURE_SENSOR_PIN 34  // Broche où est branché le capteur
+// Définition des capteurs
+#define MOISTURE_SENSOR_PIN 34  // Capteur d'humidité
+#define TEMPERATURE_SENSOR_PIN 35  // Capteur de température
 
 void setup() {
     Serial.begin(115200);
     
-    WiFi.disconnect(true);
-    delay(1000);
-
-    WiFi.mode(WIFI_STA);
-    esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)identity, strlen(identity));  
-    esp_wifi_sta_wpa2_ent_set_username((uint8_t*)identity, strlen(identity));  
-    esp_wifi_sta_wpa2_ent_set_password((uint8_t*)password, strlen(password));  
-    esp_wifi_sta_wpa2_ent_enable();
-
-    WiFi.begin(ssid);
+    WiFi.begin(ssid, password);
     Serial.print("Connexion à ");
     Serial.print(ssid);
 
@@ -36,19 +26,26 @@ void setup() {
     }
     
     Serial.println("\nConnecté !");
-    Serial.println("Adresse IP : " + WiFi.localIP().toString());
+    Serial.print("Adresse IP : ");
+    Serial.println(WiFi.localIP());
 }
 
 void loop() {
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
         
-        // Lecture du capteur de moisture
-        int moistureValue = analogRead(MOISTURE_SENSOR_PIN);
-        
+        // Lecture des capteurs
+        //int moistureValue = analogRead(MOISTURE_SENSOR_PIN);
+        //int temperatureValue = analogRead(TEMPERATURE_SENSOR_PIN); 
+        int moistureValue = 500;  
+        float temperature = 25.0; 
+        float temperature = (temperatureValue / 4095.0) * 100.0; // Conversion
+
         // Création du JSON
         StaticJsonDocument<200> jsonDoc;
         jsonDoc["moisture"] = moistureValue;
+        jsonDoc["temperature"] = temperature;
+
         String jsonString;
         serializeJson(jsonDoc, jsonString);
 
@@ -57,10 +54,14 @@ void loop() {
         http.addHeader("Content-Type", "application/json");
         int httpResponseCode = http.POST(jsonString);
 
-        // Affichage de la réponse
+        // Affichage de la réponse serveur
         Serial.print("Réponse HTTP: ");
         Serial.println(httpResponseCode);
-        Serial.println(http.getString());
+        if (httpResponseCode > 0) {
+            Serial.println(" Réponse du serveur : " + http.getString());
+        } else {
+            Serial.println("⚠️ Échec de l'envoi des données !");
+        }
 
         http.end();
     } else {

@@ -1,10 +1,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include "esp_wpa2.h"  
 
-const char* ssid = "OMNES Education";  
-const char* identity = "khadidiatou.ascofare@edu.ece.fr";  
-const char* password = "5W2j_-n1j";
+const char* ssid = "iPhone 13 Pro de Ines";  
+const char* password = "honeyy45";
 const char* server_url = "http://10.5.24.231:8000/data";  
 
 void setup() {
@@ -13,47 +11,55 @@ void setup() {
     delay(1000);
     
     WiFi.mode(WIFI_STA);
-    esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)identity, strlen(identity));  
-    esp_wifi_sta_wpa2_ent_set_username((uint8_t*)identity, strlen(identity));  
-    esp_wifi_sta_wpa2_ent_set_password((uint8_t*)password, strlen(password));  
-    esp_wifi_sta_wpa2_ent_enable();
+    WiFi.begin(ssid, password);
 
-    WiFi.begin(ssid);
     Serial.print("Connexion à ");
-    Serial.print(ssid);
+    Serial.println(ssid);
 
-    while (WiFi.status() != WL_CONNECTED) {
+    unsigned long startAttemptTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 20000) {
         delay(500);
         Serial.print(".");
     }
-    Serial.println("\nConnecté !");
-    Serial.print("Adresse IP : ");
-    Serial.println(WiFi.localIP());
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\nConnecté !");
+        Serial.print("📶 Adresse IP : ");
+        Serial.println(WiFi.localIP());
+    } else {
+        Serial.println("\nÉchec de connexion !");
+    }
 }
 
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(server_url);
-    http.addHeader("Content-Type", "application/json");  // JSON
+    http.addHeader("Content-Type", "application/json");
 
-    //  Simulation des données (remplace avec des lectures de capteur)
-    float temperature = random(20, 30);
-    float moisture = random(40, 60);
+    float temperature = random(200, 300) / 10.0;
+    float moisture = random(400, 600) / 10.0;
 
-    //  Création du JSON
-    String jsonData = "{\"temperature\": " + String(temperature) + ", \"moisture\": " + String(moisture) + "}";
+    String jsonData = "{\"temperature\": " + String(temperature, 1) + ", \"moisture\": " + String(moisture, 1) + "}";
 
-    //  Envoi de la requête HTTP POST
+    Serial.println("Envoi des données : " + jsonData);
+    
     int httpResponseCode = http.POST(jsonData);
 
     Serial.print("Réponse serveur : ");
     Serial.println(httpResponseCode);
 
-    http.end();  // Fermer la connexion
+    if (httpResponseCode > 0) {
+        String response = http.getString();
+        Serial.println("Réponse du serveur : " + response);
+    } else {
+        Serial.println("⚠️ Échec de l'envoi des données !");
+    }
+
+    http.end();
   } else {
     Serial.println("Wi-Fi déconnecté !");
   }
 
-  delay(5000);  // Attendre 5 secondes avant le prochain envoi
+  delay(5000);
 }
