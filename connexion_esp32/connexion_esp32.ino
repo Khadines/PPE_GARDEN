@@ -7,7 +7,7 @@ const char* ssid = "iPhone 13 Pro de Ines";
 const char* password = "honeyy45";  
 
 // Adresse de ton serveur FastAPI
-const char* serverUrl = "http://10.5.24.231:8000/data";  
+const char* serverUrl = "http://172.20.10.3:8000/data";
 
 // Définition des capteurs
 #define MOISTURE_SENSOR_PIN 34  // Capteur d'humidité
@@ -38,7 +38,7 @@ void loop() {
         //int moistureValue = analogRead(MOISTURE_SENSOR_PIN);
         //int temperatureValue = analogRead(TEMPERATURE_SENSOR_PIN); 
         int moistureValue = 500;  
-        float temperature = 25.0; 
+        float temperatureValue = 25.0; 
         float temperature = (temperatureValue / 4095.0) * 100.0; // Conversion
 
         // Création du JSON
