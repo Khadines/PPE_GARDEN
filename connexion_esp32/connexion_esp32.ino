@@ -4,7 +4,7 @@
 
 // Identifiants du Wi-Fi 
 const char* ssid = "iPhone 13 Pro de Ines";
-const char* password = "honeyy45";  
+const char* password = "honey";  
 
 // Adresse de ton serveur FastAPI
 const char* serverUrl = "http://172.20.10.3:8000/data";
