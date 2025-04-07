@@ -8,11 +8,11 @@
         <div class="sensor-container">
           <div class="sensor-list">
             <div
-              v-for="(sensor, index) in sensors"
-              :key="sensor.title"
-              class="sensor-card"
-              :class="{ active: selectedSensorIndex === index }"
-              @click="selectSensor(index)"
+                v-for="(sensor, index) in sensors"
+                :key="sensor.title"
+                class="sensor-card"
+                :class="{ active: selectedSensorIndex === index }"
+                @click="selectSensor(index)"
             >
               <img :src="sensor.logo" alt="Logo" class="sensor-logo" />
               <span class="sensor-title">{{ sensor.title }}</span>
@@ -22,16 +22,16 @@
             <h3>What is it?</h3>
             <p>{{ sensors[selectedSensorIndex].description }}</p>
             <div
-              v-if="sensors[selectedSensorIndex].labels.length > 0"
-              :class="{
+                v-if="sensors[selectedSensorIndex].labels.length > 0"
+                :class="{
                 'label-container': true,
                 horizontal: sensors[selectedSensorIndex].alignment === 'horizontal',
               }"
             >
               <div
-                v-for="(label, idx) in sensors[selectedSensorIndex].labels"
-                :key="idx"
-                class="label"
+                  v-for="(label, idx) in sensors[selectedSensorIndex].labels"
+                  :key="idx"
+                  class="label"
               >
                 <span class="label-title">{{ label.name }}</span>
                 <span class="label-description">{{ label.description }}</span>
@@ -44,7 +44,7 @@
         <div class="garden-section">
           <h1 class="title" style="margin-top: 5rem;">Votre potager</h1>
           <h2 class="subtitle">Retrouvez l'emplacement de vos capteurs</h2>
-          <img src="C:\Users\yodro\Desktop\PPE\PPE FINAL\PPE_GARDEN\frontend\public\assets\schemaPotager.png" alt="Diagramme du potager" class="garden-image" />
+          <img src="/Users/ines/Documents/ECOLE/ING4/SEMESTRE2/PPE_GARDEN/frontend/public/assets/schemaPotager.png" alt="Diagramme du potager" class="garden-image" />
 
           <!-- Boutons pour électrovannes -->
           <div class="valves-buttons">
@@ -89,11 +89,11 @@
           <h1 class="title" style="margin-top: 5rem;">Données météo en temps réel</h1>
           <h2 class="subtitle">Station météo connectée WeatherLink</h2>
           <div class="weather-widget">
-            <iframe 
-              src='https://www.weatherlink.com/embeddablePage/show/9a2e3e058fb547f1942db93fc5519c9d/signature' 
-              width='760' 
-              height='200' 
-              frameborder='0'></iframe>
+            <iframe
+                src='https://www.weatherlink.com/embeddablePage/show/9a2e3e058fb547f1942db93fc5519c9d/signature'
+                width='760'
+                height='200'
+                frameborder='0'></iframe>
           </div>
         </div>
       </div>
@@ -111,89 +111,146 @@ export default {
       selectedValve: null,
       valveDuration: null,
       startTime: null,
+      isConnected: false,
+      lastUpdate: null,
       valves: Array.from({ length: 5 }, () => ({ status: 'closed', remainingTime: 0 })),
+      sensorValues: {
+        moisture: null,
+        temperature: null,
+        light: null,
+        rain: null
+      },
       sensors: [
         {
           title: "Soil moisture sensor",
-          logo: "C:\\Users\\yodro\\Desktop\\PPE\\PPE FINAL\\PPE_GARDEN\\frontend\\public\\assets\\eau 1.png",
-          description:
-            "A device that measures the volumetric water content in soil, allowing users to monitor and optimize irrigation.",
+          logo: "/assets/eau1.png",
+          description: "A device that measures the volumetric water content in soil.",
           alignment: "horizontal",
           labels: [
-            { name: "Capteur 1", description: "Output: 123" },
-            { name: "Capteur 2", description: "Output: 456" },
-            { name: "Capteur 3", description: "Output: 789" },
+            { name: "Humidité", description: "Output: N/A" },
           ],
+          unit: "%",
+          key: "moisture"
         },
         {
           title: "Temperature sensor",
-          logo: "C:\\Users\\yodro\\Desktop\\PPE\\PPE FINAL\\PPE_GARDEN\\frontend\\public\\assets\\climat 1.png",
-          description:
-            "Les capteurs de température mesurent l'énergie thermique générée par un objet ou un système.",
+          logo: "/assets/climat1.png",
+          description: "Mesure l'énergie thermique générée par un objet ou un système.",
           alignment: "vertical",
-          labels: [{ name: "Capteur 1", description: "Output: 24°C" }],
+          labels: [
+            { name: "Température", description: "Output: N/A" }
+          ],
+          unit: "°C",
+          key: "temperature"
         },
         {
           title: "Light sensor",
-          logo: "C:\\Users\\yodro\\Desktop\\PPE\\PPE FINAL\\PPE_GARDEN\\frontend\\public\\assets\\solar-power 1.png",
+          logo: "/assets/solar-power1.png",
           description: "A sensor that detects the intensity of light in the environment.",
           alignment: "vertical",
-          labels: [{ name: "Capteur 1", description: "Output: 300 lux" }],
+          labels: [
+            { name: "Luminosité", description: "Output: N/A" }
+          ],
+          unit: "lux",
+          key: "light"
         },
         {
           title: "Raingauge sensor",
-          logo: "C:\\Users\\yodro\\Desktop\\PPE\\PPE FINAL\\PPE_GARDEN\\frontend\\public\\assets\\sauver-la-nature 1.png",
+          logo: "/assets/sauver-la-nature1.png",
           description: "A device used to measure rainfall over a specific period of time.",
           alignment: "vertical",
-          labels: [{ name: "Capteur 1", description: "Output: 15 mm" }],
-        },
+          labels: [
+            { name: "Pluie", description: "Output: N/A" }
+          ],
+          unit: "mm",
+          key: "rain"
+        }
       ]
     };
   },
+  mounted() {
+    this.fetchSensorData();
+    this.interval = setInterval(this.fetchSensorData, 5000);
+  },
+  beforeDestroy() {
+    clearInterval(this.interval);
+  },
   methods: {
+    async fetchSensorData() {
+      try {
+        const response = await fetch('http://localhost:8000/data');
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+        this.sensorValues = data;
+        this.isConnected = true;
+        this.lastUpdate = new Date().toLocaleTimeString();
+        this.updateSensorLabels();
+      } catch (error) {
+        console.error("Erreur de récupération:", error);
+        this.isConnected = false;
+      }
+    },
+
+    updateSensorLabels() {
+      this.sensors.forEach(sensor => {
+        if (sensor.key && this.sensorValues[sensor.key] !== undefined) {
+          sensor.labels[0].description = `Output: ${this.sensorValues[sensor.key]} ${sensor.unit}`;
+        }
+      });
+    },
+
     selectSensor(index) {
       this.selectedSensorIndex = index;
     },
+
     openValve(valveNumber) {
       this.selectedValve = valveNumber;
       this.valveDuration = null;
       this.startTime = null;
     },
+
     startTimedValve() {
       const index = this.selectedValve - 1;
       const now = new Date();
-      const [hours, minutes] = this.startTime.split(":").map(Number);
-      const start = new Date();
-      start.setHours(hours, minutes, 0, 0);
-      const delay = start - now;
 
-      const startValve = () => {
-        this.valves[index].status = 'open';
-        this.valves[index].remainingTime = this.valveDuration;
-        const interval = setInterval(() => {
-          if (this.valves[index].remainingTime > 0) {
-            this.valves[index].remainingTime--;
-          } else {
-            this.valves[index].status = 'closed';
-            clearInterval(interval);
-          }
-        }, 1000);
-      };
+      if (this.startTime) {
+        const [hours, minutes] = this.startTime.split(":").map(Number);
+        const start = new Date();
+        start.setHours(hours, minutes, 0, 0);
+        const delay = start - now;
 
-      if (delay > 0) {
-        setTimeout(startValve, delay);
-      } else {
-        startValve();
+        if (delay > 0) {
+          setTimeout(() => this.activateValve(index), delay);
+          return;
+        }
       }
 
+      this.activateValve(index);
       this.closeModal();
     },
+
+    activateValve(index) {
+      this.valves[index].status = 'open';
+      this.valves[index].remainingTime = this.valveDuration;
+
+      const interval = setInterval(() => {
+        if (this.valves[index].remainingTime > 0) {
+          this.valves[index].remainingTime--;
+        } else {
+          this.valves[index].status = 'closed';
+          clearInterval(interval);
+        }
+      }, 1000);
+    },
+
     closeValve() {
       const index = this.selectedValve - 1;
       this.valves[index].status = 'closed';
       this.valves[index].remainingTime = 0;
       this.closeModal();
     },
+
     closeModal() {
       this.selectedValve = null;
       this.valveDuration = null;
