@@ -35,6 +35,9 @@
               >
                 <span class="label-title">{{ label.name }}</span>
                 <span class="label-description">{{ label.description }}</span>
+                <span class="label-advice" v-if="getAdviceForSensor(sensors[selectedSensorIndex])"> 
+                {{ getAdviceForSensor(sensors[selectedSensorIndex]) }}
+                </span>
               </div>
             </div>
           </div>
@@ -44,7 +47,7 @@
         <div class="garden-section">
           <h1 class="title" style="margin-top: 5rem;">Votre potager</h1>
           <h2 class="subtitle">Retrouvez l'emplacement de vos capteurs</h2>
-          <img src="/Users/ines/Documents/ECOLE/ING4/SEMESTRE2/PPE_GARDEN/frontend/public/assets/schemaPotager.png" alt="Diagramme du potager" class="garden-image" />
+          <img src="C:\Users\yodro\Desktop\PPE\PPE FINAL BIS\PPE_GARDEN\frontend\public\assets\schemaPotager.png" alt="Diagramme du potager" class="garden-image" />
 
           <!-- Boutons pour électrovannes -->
           <div class="valves-buttons">
@@ -209,6 +212,29 @@ export default {
       this.valveDuration = null;
       this.startTime = null;
     },
+
+    getAdviceForSensor(sensor) {
+    const val = this.sensorValues[sensor.key];
+    switch (sensor.key) {
+      case 'moisture':
+        if (val < 30) return 'Sol trop sec : pensez à arroser.';
+        if (val > 70) return 'Sol très humide : évitez d’arroser.';
+        return 'Humidité correcte.';
+      case 'temperature':
+        if (val < 10) return 'Température basse, protégez les plantes sensibles.';
+        if (val > 30) return 'Température élevée, surveillez l’arrosage.';
+        return 'Température idéale pour le potager.';
+      case 'light':
+        if (val < 200) return 'Lumière faible, évitez les semis aujourd’hui.';
+        if (val > 800) return 'Lumière très forte, attention aux brûlures.';
+        return 'Luminosité normale.';
+      case 'rain':
+        if (val > 5) return 'Pluie détectée récemment, inutile d’arroser.';
+        return 'Pas de pluie récente, arrosage peut être nécessaire.';
+      default:
+        return null;
+    }
+  },
 
     startTimedValve() {
       const index = this.selectedValve - 1;
@@ -486,4 +512,12 @@ export default {
   background-color: #4c3ec4;
   transform: scale(0.97);
 }
+
+.label-advice {
+  font-size: 0.8rem;
+  color: #6c63ff;
+  margin-top: 0.3rem;
+  text-align: center;
+}
+
 </style>
