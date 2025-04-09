@@ -13,11 +13,11 @@
         <div class="sensor-container">
           <div class="sensor-list">
             <div
-              v-for="(sensor, index) in sensors"
-              :key="sensor.title"
-              class="sensor-card"
-              :class="{ active: selectedSensorIndex === index }"
-              @click="selectSensor(index)"
+                v-for="(sensor, index) in sensors"
+                :key="sensor.title"
+                class="sensor-card"
+                :class="{ active: selectedSensorIndex === index }"
+                @click="selectSensor(index)"
             >
               <img :src="sensor.logo" alt="Logo" class="sensor-logo" />
               <span class="sensor-title">{{ sensor.title }}</span>
@@ -28,16 +28,16 @@
             <p>{{ sensors[selectedSensorIndex].description }}</p>
 
             <div
-              v-if="sensors[selectedSensorIndex].labels.length > 0"
-              :class="{
+                v-if="sensors[selectedSensorIndex].labels.length > 0"
+                :class="{
                 'label-container': true,
                 horizontal: sensors[selectedSensorIndex].alignment === 'horizontal',
               }"
             >
               <div
-                v-for="(label, idx) in sensors[selectedSensorIndex].labels"
-                :key="idx"
-                class="label"
+                  v-for="(label, idx) in sensors[selectedSensorIndex].labels"
+                  :key="idx"
+                  class="label"
               >
                 <span class="label-title">{{ label.name }}</span>
                 <span class="label-description">{{ label.description }}</span>
@@ -45,8 +45,8 @@
 
               <!-- ✅ Conseil en dessous des labels -->
               <div
-                v-if="getAdviceForSensor(sensors[selectedSensorIndex])"
-                class="sensor-advice"
+                  v-if="getAdviceForSensor(sensors[selectedSensorIndex])"
+                  class="sensor-advice"
               >
                 Conseil : {{ getAdviceForSensor(sensors[selectedSensorIndex]) }}
               </div>
@@ -100,10 +100,10 @@
           <h2 class="subtitle">Station météo connectée WeatherLink</h2>
           <div class="weather-widget">
             <iframe
-              src='https://www.weatherlink.com/embeddablePage/show/9a2e3e058fb547f1942db93fc5519c9d/signature'
-              width='760'
-              height='200'
-              frameborder='0'></iframe>
+                src='https://www.weatherlink.com/embeddablePage/show/9a2e3e058fb547f1942db93fc5519c9d/signature'
+                width='760'
+                height='200'
+                frameborder='0'></iframe>
           </div>
         </div>
       </div>
@@ -186,6 +186,7 @@ export default {
         this.isConnected = false;
       }
     },
+
     updateSensorLabels() {
       this.sensors.forEach(sensor => {
         if (sensor.key && this.sensorValues[sensor.key] !== undefined) {
@@ -193,25 +194,17 @@ export default {
         }
       });
     },
+
     selectSensor(index) {
       this.selectedSensorIndex = index;
     },
-    openValve(valveNumber) {
-      this.selectedValve = valveNumber;
+
+    openValve(valveId) {
+      this.selectedValve = valveId;
       this.valveDuration = null;
       this.startTime = null;
     },
-    closeModal() {
-      this.selectedValve = null;
-      this.valveDuration = null;
-      this.startTime = null;
-    },
-    closeValve() {
-      const index = this.selectedValve - 1;
-      this.valves[index].status = 'closed';
-      this.valves[index].remainingTime = 0;
-      this.closeModal();
-    },
+
     startTimedValve() {
       const index = this.selectedValve - 1;
       const now = new Date();
@@ -231,37 +224,100 @@ export default {
       this.activateValve(index);
       this.closeModal();
     },
+
     activateValve(index) {
       this.valves[index].status = 'open';
       this.valves[index].remainingTime = this.valveDuration;
+
+      // Appel API pour notifier ouverture de vanne
+      fetch('http://localhost:8000/valves', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ valveId: index + 1, duration: this.valveDuration })
+      }).then(response => {
+        if (!response.ok) {
+          console.error("Erreur lors de l'activation de la vanne");
+        }
+      });
 
       const interval = setInterval(() => {
         if (this.valves[index].remainingTime > 0) {
           this.valves[index].remainingTime--;
         } else {
           this.valves[index].status = 'closed';
+
+          // Appel API pour notifier fermeture automatique
+          fetch('http://localhost:8000/valves', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              valveId: index + 1,
+              status: 'closed',
+              duration: this.valveDuration,
+            }),
+          }).then(res => {
+            if (!res.ok) throw new Error('Erreur ouverture valve');
+          }).catch(err => {
+            console.error("Erreur lors de l'envoi au backend :", err);
+          });
+
           clearInterval(interval);
         }
       }, 1000);
     },
+
+    closeValve() {
+      const index = this.selectedValve - 1;
+      this.valves[index].status = 'closed';
+      this.valves[index].remainingTime = 0;
+
+      // Appel API pour notifier fermeture manuelle
+      fetch('http://localhost:8000/valves', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          valveId: this.selectedValve,
+          status: 'closed',
+        }),
+      }).then(res => {
+        if (!res.ok) throw new Error('Erreur fermeture valve');
+      }).catch(err => {
+        console.error("Erreur lors de l'envoi au backend :", err);
+      });
+
+      this.closeModal();
+    },
+
+    closeModal() {
+      this.selectedValve = null;
+      this.valveDuration = null;
+      this.startTime = null;
+    },
+
     getAdviceForSensor(sensor) {
       const val = this.sensorValues[sensor.key];
       switch (sensor.key) {
         case 'moisture':
-          if (val < 30) return 'Sol trop sec : pensez à arroser ou vos plantes vont se dessécher.';
-          if (val > 70) return 'Sol très humide : évitez d’arroser.';
-          return 'Humidité correcte.';
+          if (val < 30) return "Sol trop sec : pensez à arroser ou vos plantes vont se dessécher.";
+          if (val > 70) return "Sol très humide : évitez d'arroser.";
+          return "Humidité correcte.";
         case 'temperature':
-          if (val < 10) return 'Température basse, protégez les plantes sensibles.';
-          if (val > 30) return 'Température élevée, surveillez l’arrosage.';
-          return 'Température idéale pour le potager.';
+          if (val < 10) return "Température basse, protégez les plantes sensibles.";
+          if (val > 30) return "Température élevée, surveillez l'arrosage.";
+          return "Température idéale pour le potager.";
         case 'light':
-          if (val < 200) return 'Lumière faible, évitez les semis aujourd’hui.';
-          if (val > 800) return 'Lumière très forte, attention aux brûlures.';
-          return 'Luminosité normale.';
+          if (val < 200) return "Lumière faible, évitez les semis aujourd'hui.";
+          if (val > 800) return "Lumière très forte, attention aux brûlures.";
+          return "Luminosité normale.";
         case 'rain':
-          if (val > 5) return 'Pluie détectée récemment, inutile d’arroser.';
-          return 'Pas de pluie récente, arrosage peut être nécessaire.';
+          if (val > 5) return "Pluie détectée récemment, inutile d'arroser.";
+          return "Pas de pluie récente, arrosage peut être nécessaire.";
         default:
           return null;
       }
