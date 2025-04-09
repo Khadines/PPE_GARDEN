@@ -3,41 +3,52 @@
     <div class="layout">
       <Navbar />
       <div class="content">
+        <!-- Image en haut à droite -->
+        <img src="/assets/historique.png" alt="Logo" class="top-right-image" />
+        <!-- Logo au-dessus du titre -->
+        <img src="/assets/logo.png" alt="Logo" class="section-logo" />
+
         <h1 class="title">Section capteur</h1>
         <h2 class="subtitle">Tous vos capteurs réunis, ici</h2>
         <div class="sensor-container">
           <div class="sensor-list">
             <div
-                v-for="(sensor, index) in sensors"
-                :key="sensor.title"
-                class="sensor-card"
-                :class="{ active: selectedSensorIndex === index }"
-                @click="selectSensor(index)"
+              v-for="(sensor, index) in sensors"
+              :key="sensor.title"
+              class="sensor-card"
+              :class="{ active: selectedSensorIndex === index }"
+              @click="selectSensor(index)"
             >
               <img :src="sensor.logo" alt="Logo" class="sensor-logo" />
               <span class="sensor-title">{{ sensor.title }}</span>
             </div>
           </div>
           <div class="sensor-details">
-            <h3>What is it?</h3>
+            <h3>Qu'est-ce que c'est ?</h3>
             <p>{{ sensors[selectedSensorIndex].description }}</p>
+
             <div
-                v-if="sensors[selectedSensorIndex].labels.length > 0"
-                :class="{
+              v-if="sensors[selectedSensorIndex].labels.length > 0"
+              :class="{
                 'label-container': true,
                 horizontal: sensors[selectedSensorIndex].alignment === 'horizontal',
               }"
             >
               <div
-                  v-for="(label, idx) in sensors[selectedSensorIndex].labels"
-                  :key="idx"
-                  class="label"
+                v-for="(label, idx) in sensors[selectedSensorIndex].labels"
+                :key="idx"
+                class="label"
               >
                 <span class="label-title">{{ label.name }}</span>
                 <span class="label-description">{{ label.description }}</span>
-                <span class="label-advice" v-if="getAdviceForSensor(sensors[selectedSensorIndex])"> 
-                {{ getAdviceForSensor(sensors[selectedSensorIndex]) }}
-                </span>
+              </div>
+
+              <!-- ✅ Conseil en dessous des labels -->
+              <div
+                v-if="getAdviceForSensor(sensors[selectedSensorIndex])"
+                class="sensor-advice"
+              >
+                Conseil : {{ getAdviceForSensor(sensors[selectedSensorIndex]) }}
               </div>
             </div>
           </div>
@@ -47,9 +58,8 @@
         <div class="garden-section">
           <h1 class="title" style="margin-top: 5rem;">Votre potager</h1>
           <h2 class="subtitle">Retrouvez l'emplacement de vos capteurs</h2>
-          <img src="C:\Users\yodro\Desktop\PPE\PPE FINAL BIS\PPE_GARDEN\frontend\public\assets\schemaPotager.png" alt="Diagramme du potager" class="garden-image" />
+          <img src="/assets/schemapotagerbis.png" alt="Diagramme du potager" class="garden-image" />
 
-          <!-- Boutons pour électrovannes -->
           <div class="valves-buttons">
             <div v-for="valve in 5" :key="valve" class="valve-control">
               <button @click="openValve(valve)">
@@ -68,17 +78,14 @@
           </div>
         </div>
 
-        <!-- contrôle -->
+        <!-- Contrôle électrovannes -->
         <div v-if="selectedValve !== null" class="modal-overlay" @click.self="closeModal">
           <div class="modal">
             <h2>Contrôle de l’électrovanne {{ selectedValve }}</h2>
-
             <label for="duration">Temps d'ouverture (en secondes) :</label>
             <input id="duration" type="number" v-model.number="valveDuration" min="1" placeholder="Ex: 60" />
-
             <label for="start-time">Heure de début :</label>
             <input id="start-time" type="time" v-model="startTime" />
-
             <div class="modal-buttons">
               <button @click="startTimedValve">Lancer avec minuterie</button>
               <button @click="closeValve">Fermer maintenant</button>
@@ -93,10 +100,10 @@
           <h2 class="subtitle">Station météo connectée WeatherLink</h2>
           <div class="weather-widget">
             <iframe
-                src='https://www.weatherlink.com/embeddablePage/show/9a2e3e058fb547f1942db93fc5519c9d/signature'
-                width='760'
-                height='200'
-                frameborder='0'></iframe>
+              src='https://www.weatherlink.com/embeddablePage/show/9a2e3e058fb547f1942db93fc5519c9d/signature'
+              width='760'
+              height='200'
+              frameborder='0'></iframe>
           </div>
         </div>
       </div>
@@ -107,7 +114,6 @@
 <script>
 export default {
   name: "App",
-  components: {},
   data() {
     return {
       selectedSensorIndex: 0,
@@ -117,54 +123,41 @@ export default {
       isConnected: false,
       lastUpdate: null,
       valves: Array.from({ length: 5 }, () => ({ status: 'closed', remainingTime: 0 })),
-      sensorValues: {
-        moisture: null,
-        temperature: null,
-        light: null,
-        rain: null
-      },
+      sensorValues: { moisture: null, temperature: null, light: null, rain: null },
       sensors: [
         {
-          title: "Soil moisture sensor",
-          logo: "/assets/eau1.png",
-          description: "A device that measures the volumetric water content in soil.",
+          title: "Capteur d'humidité",
+          logo: "/assets/eau 1.png",
+          description: "Les capteurs d'humidité du sol mesurent la teneur en eau volumétrique du sol.",
           alignment: "horizontal",
-          labels: [
-            { name: "Humidité", description: "Output: N/A" },
-          ],
+          labels: [{ name: " Humidité ", description: "Output: 26" }],
           unit: "%",
           key: "moisture"
         },
         {
-          title: "Temperature sensor",
-          logo: "/assets/climat1.png",
+          title: "Capteur de température",
+          logo: "/assets/climat.png",
           description: "Mesure l'énergie thermique générée par un objet ou un système.",
           alignment: "vertical",
-          labels: [
-            { name: "Température", description: "Output: N/A" }
-          ],
+          labels: [{ name: " Température ", description: "Output: 11" }],
           unit: "°C",
           key: "temperature"
         },
         {
-          title: "Light sensor",
-          logo: "/assets/solar-power1.png",
-          description: "A sensor that detects the intensity of light in the environment.",
+          title: "Capteur de lumière",
+          logo: "/assets/solar-power 1.png",
+          description: "Les capteurs de luminosité sont des détecteurs photosensibles ou détecteurs de lumière qui transforment la lumière absorbée en grandeur mesurable.",
           alignment: "vertical",
-          labels: [
-            { name: "Luminosité", description: "Output: N/A" }
-          ],
+          labels: [{ name: " Luminosité ", description: "Output: 189" }],
           unit: "lux",
           key: "light"
         },
         {
-          title: "Raingauge sensor",
-          logo: "/assets/sauver-la-nature1.png",
-          description: "A device used to measure rainfall over a specific period of time.",
+          title: "Pluviomètre",
+          logo: "/assets/sauver-la-nature 1.png",
+          description: "Le pluviomètre est un instrument météorologique destiné à mesurer la quantité de précipitations (surtout la pluie) tombée pendant un intervalle de temps.",
           alignment: "vertical",
-          labels: [
-            { name: "Pluie", description: "Output: N/A" }
-          ],
+          labels: [{ name: " Pluie ", description: "Output: 2" }],
           unit: "mm",
           key: "rain"
         }
@@ -183,7 +176,6 @@ export default {
       try {
         const response = await fetch('http://localhost:8000/data');
         if (!response.ok) throw new Error('Network response was not ok');
-
         const data = await response.json();
         this.sensorValues = data;
         this.isConnected = true;
@@ -194,7 +186,6 @@ export default {
         this.isConnected = false;
       }
     },
-
     updateSensorLabels() {
       this.sensors.forEach(sensor => {
         if (sensor.key && this.sensorValues[sensor.key] !== undefined) {
@@ -202,40 +193,25 @@ export default {
         }
       });
     },
-
     selectSensor(index) {
       this.selectedSensorIndex = index;
     },
-
     openValve(valveNumber) {
       this.selectedValve = valveNumber;
       this.valveDuration = null;
       this.startTime = null;
     },
-
-    getAdviceForSensor(sensor) {
-    const val = this.sensorValues[sensor.key];
-    switch (sensor.key) {
-      case 'moisture':
-        if (val < 30) return 'Sol trop sec : pensez à arroser.';
-        if (val > 70) return 'Sol très humide : évitez d’arroser.';
-        return 'Humidité correcte.';
-      case 'temperature':
-        if (val < 10) return 'Température basse, protégez les plantes sensibles.';
-        if (val > 30) return 'Température élevée, surveillez l’arrosage.';
-        return 'Température idéale pour le potager.';
-      case 'light':
-        if (val < 200) return 'Lumière faible, évitez les semis aujourd’hui.';
-        if (val > 800) return 'Lumière très forte, attention aux brûlures.';
-        return 'Luminosité normale.';
-      case 'rain':
-        if (val > 5) return 'Pluie détectée récemment, inutile d’arroser.';
-        return 'Pas de pluie récente, arrosage peut être nécessaire.';
-      default:
-        return null;
-    }
-  },
-
+    closeModal() {
+      this.selectedValve = null;
+      this.valveDuration = null;
+      this.startTime = null;
+    },
+    closeValve() {
+      const index = this.selectedValve - 1;
+      this.valves[index].status = 'closed';
+      this.valves[index].remainingTime = 0;
+      this.closeModal();
+    },
     startTimedValve() {
       const index = this.selectedValve - 1;
       const now = new Date();
@@ -255,7 +231,6 @@ export default {
       this.activateValve(index);
       this.closeModal();
     },
-
     activateValve(index) {
       this.valves[index].status = 'open';
       this.valves[index].remainingTime = this.valveDuration;
@@ -269,40 +244,48 @@ export default {
         }
       }, 1000);
     },
-
-    closeValve() {
-      const index = this.selectedValve - 1;
-      this.valves[index].status = 'closed';
-      this.valves[index].remainingTime = 0;
-      this.closeModal();
-    },
-
-    closeModal() {
-      this.selectedValve = null;
-      this.valveDuration = null;
-      this.startTime = null;
+    getAdviceForSensor(sensor) {
+      const val = this.sensorValues[sensor.key];
+      switch (sensor.key) {
+        case 'moisture':
+          if (val < 30) return 'Sol trop sec : pensez à arroser ou vos plantes vont se dessécher.';
+          if (val > 70) return 'Sol très humide : évitez d’arroser.';
+          return 'Humidité correcte.';
+        case 'temperature':
+          if (val < 10) return 'Température basse, protégez les plantes sensibles.';
+          if (val > 30) return 'Température élevée, surveillez l’arrosage.';
+          return 'Température idéale pour le potager.';
+        case 'light':
+          if (val < 200) return 'Lumière faible, évitez les semis aujourd’hui.';
+          if (val > 800) return 'Lumière très forte, attention aux brûlures.';
+          return 'Luminosité normale.';
+        case 'rain':
+          if (val > 5) return 'Pluie détectée récemment, inutile d’arroser.';
+          return 'Pas de pluie récente, arrosage peut être nécessaire.';
+        default:
+          return null;
+      }
     }
   }
 };
 </script>
 
 <style>
+/* Styles communs */
 #app {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  height: 100vh;
   display: flex;
   flex-direction: column;
 }
 .layout {
   display: flex;
-  height: 100%;
 }
 .content {
   flex: 1;
   padding: 2rem;
-  overflow-y: auto;
+  position: relative;
 }
 .title {
   font-size: 2.5rem;
@@ -314,6 +297,24 @@ export default {
   color: #555;
   margin-bottom: 1.5rem;
 }
+.section-logo {
+  display: block;
+  max-width: 50px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+.top-right-image {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 240px;
+  height: auto;
+  z-index: 10;
+  padding-top: 10px;
+  padding-right: 10px;
+}
+
+/* Sensors */
 .sensor-container {
   display: flex;
   gap: 2rem;
@@ -382,7 +383,7 @@ export default {
   padding: 0.5rem;
   border-radius: 8px;
   min-width: 80px;
-  max-width: 80px;
+  max-width: 90px;
 }
 .label-title {
   font-weight: bold;
@@ -393,6 +394,18 @@ export default {
   color: #555;
   margin-top: 0.3rem;
 }
+
+.sensor-advice {
+  display: table; /* ✅ force le shrink-wrap */
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #6c63ff;
+  background-color: #f4f2ff;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #dcd2ff;
+}
+
 .garden-section {
   margin-top: 5rem;
   text-align: left;
@@ -489,9 +502,8 @@ export default {
   display: flex;
   justify-content: center;
 }
-
 .valves-buttons button {
-  background-color: #6c63ff; /* violet principal */
+  background-color: #6c63ff;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -502,22 +514,29 @@ export default {
   transition: all 0.3s ease;
   box-shadow: 0 4px 8px rgba(108, 99, 255, 0.3);
 }
-
 .valves-buttons button:hover {
   background-color: #5848d7;
   transform: translateY(-2px);
 }
-
 .valves-buttons button:active {
   background-color: #4c3ec4;
   transform: scale(0.97);
 }
-
-.label-advice {
-  font-size: 0.8rem;
-  color: #6c63ff;
-  margin-top: 0.3rem;
-  text-align: center;
+.top-right-image {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 240px;
+  height: auto;
+  z-index: 10;
+  padding-top: 10px;
+  padding-right: 10px;
 }
 
+.section-logo {
+  display: block;
+  max-width: 50px; /* taille du logo */
+  height: auto;
+  margin-bottom: 1rem;
+}
 </style>
