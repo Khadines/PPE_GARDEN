@@ -93,7 +93,6 @@ def read_root():
 ################################# VALVES ####################################
 
 
-
 # État initial des valves
 valve_state = {
     "valve1": False,
@@ -109,16 +108,33 @@ async def set_valves(request: Request):
     try:
         data = await request.json()
         print("Requête reçue du frontend:", data)
-        #console.log("Payload reçu :", req.body);
-        # Mise à jour de l'état de chaque vanne
-        for i in range(1, 6):  # 5 vannes (valve1 à valve5)
-            valve_key = f"valve{i}"
-            valve_state[valve_key] = data.get(valve_key, False)
+        print("Payload reçu :", data)
+        # Gestion des deux types de payload
+        if 'valveId' in data:
+            valve_id = data['valveId']
+            valve_key = f"valve{valve_id}"
+            
+            if 'status' in data:
+                # Cas où on reçoit un statut explicit (open/closed)
+                valve_state[valve_key] = data['status'] == 'open'
+            elif 'duration' in data and data['duration'] is not None:
+                # Cas où on ouvre avec une durée
+                valve_state[valve_key] = True
+            else:
+                # Cas par défaut (fermeture)
+                valve_state[valve_key] = False
+        else:
+            
+            for i in range(1, 6):
+                valve_key = f"valve{i}"
+                if valve_key in data:
+                    valve_state[valve_key] = data[valve_key]
         
+        print("Nouveau statut des vannes :", valve_state)
         return {"status": "valves updated", "valve_state": valve_state}
+        
     except Exception as e:
         return {"error": str(e)}, 500
-
 
 @app.get("/valves")
 async def get_valve_states():

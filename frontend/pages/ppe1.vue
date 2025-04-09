@@ -235,7 +235,7 @@ export default {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ valveId: index + 1, duration: this.valveDuration })
+        body: JSON.stringify({ valveId: index + 1, status: 'open', duration: this.valveDuration })
       }).then(response => {
         if (!response.ok) {
           console.error("Erreur lors de l'activation de la vanne");
