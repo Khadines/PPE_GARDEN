@@ -35,8 +35,9 @@
               }"
             >
               <div
-                  v-for="(label, idx) in sensors[selectedSensorIndex].labels"
-                  :key="idx"
+       v-for="(label, idx) in sensors[selectedSensorIndex].labels"
+     @click="selectedLabelIndex = idx"
+     :class="{ selected: selectedLabelIndex === idx }"                  :key="idx"
                   class="label"
               >
                 <span class="label-title">{{ label.name }}</span>
@@ -44,12 +45,10 @@
               </div>
 
               <!-- ✅ Conseil en dessous des labels -->
-              <div
-                  v-if="getAdviceForSensor(sensors[selectedSensorIndex])"
-                  class="sensor-advice"
-              >
-                Conseil : {{ getAdviceForSensor(sensors[selectedSensorIndex]) }}
-              </div>
+              <div v-if="currentAdvice" class="sensor-advice">
+  Conseil : {{ currentAdvice }}
+</div>
+
             </div>
           </div>
         </div>
@@ -117,6 +116,7 @@ export default {
   data() {
     return {
       selectedSensorIndex: 0,
+      selectedLabelIndex: 0,
       selectedValve: null,
       valveDuration: null,
       startTime: null,
@@ -127,12 +127,16 @@ export default {
       sensors: [
         {
           title: "Capteur d'humidité",
-          logo: "/assets/eau 1.png",
-          description: "Les capteurs d'humidité du sol mesurent la teneur en eau volumétrique du sol.",
-          alignment: "horizontal",
-          labels: [{ name: " Humidité ", description: "Output: 26" }],
-          unit: "%",
-          key: "moisture"
+  logo: "/assets/eau 1.png",
+  description: "Les capteurs d'humidité du sol mesurent la teneur en eau volumétrique du sol.",
+  alignment: "horizontal",
+  labels: [
+    { name: "Humidité 1", description: "Output: 26", key: "surface" },
+    { name: "Humidité 2", description: "Output: 38", key: "mid" },
+    { name: "Humidité 3", description: "Output: 30", key: "deep" }
+  ],
+  unit: "%",
+  key: "moisture"
         },
         {
           title: "Capteur de température",
@@ -171,6 +175,49 @@ export default {
   beforeDestroy() {
     clearInterval(this.interval);
   },
+
+  computed: {
+  currentAdvice() {
+    const sensor = this.sensors[this.selectedSensorIndex];
+    const val = this.sensorValues[sensor.key];
+    const label = sensor.labels[this.selectedLabelIndex];
+
+    if (sensor.key === 'moisture') {
+      switch (label.key) {
+        case 'surface':
+          if (val < 30) return "Surface trop sèche : pensez à arroser légèrement.";
+          if (val > 70) return "Surface trop humide : évitez d’arroser.";
+          return "Humidité de surface correcte.";
+        case 'mid':
+          if (val < 30) return "Humidité moyenne faible : pensez à arroser.";
+          if (val > 70) return "Humidité moyenne élevée : évitez d’arroser.";
+          return "Humidité moyenne correcte.";
+        case 'deep':
+          if (val < 30) return "Trop sec : arrosage nécessaire.";
+          if (val > 70) return "Trop humide : attention à la stagnation.";
+          return "Humidité en profondeur correcte.";
+      }
+    }
+
+    // Pour les autres capteurs
+    switch (sensor.key) {
+      case 'temperature':
+        if (val < 10) return "Température basse, protégez les plantes sensibles.";
+        if (val > 30) return "Température élevée, surveillez l'arrosage.";
+        return "Température idéale pour le potager.";
+      case 'light':
+        if (val < 200) return "Lumière faible, évitez les semis aujourd'hui.";
+        if (val > 800) return "Lumière très forte, attention aux brûlures.";
+        return "Luminosité normale.";
+      case 'rain':
+        if (val > 5) return "Pluie détectée récemment, inutile d'arroser.";
+        return "Pas de pluie récente, arrosage peut être nécessaire.";
+      default:
+        return null;
+    }
+  }
+},
+
   methods: {
     async fetchSensorData() {
       try {
@@ -196,7 +243,9 @@ export default {
     },
 
     selectSensor(index) {
-      this.selectedSensorIndex = index;
+  this.selectedSensorIndex = index;
+  this.selectedLabelIndex = 0; 
+
     },
 
     openValve(valveId) {
@@ -300,28 +349,8 @@ export default {
       this.startTime = null;
     },
 
-    getAdviceForSensor(sensor) {
-      const val = this.sensorValues[sensor.key];
-      switch (sensor.key) {
-        case 'moisture':
-          if (val < 30) return "Sol trop sec : pensez à arroser ou vos plantes vont se dessécher.";
-          if (val > 70) return "Sol très humide : évitez d'arroser.";
-          return "Humidité correcte.";
-        case 'temperature':
-          if (val < 10) return "Température basse, protégez les plantes sensibles.";
-          if (val > 30) return "Température élevée, surveillez l'arrosage.";
-          return "Température idéale pour le potager.";
-        case 'light':
-          if (val < 200) return "Lumière faible, évitez les semis aujourd'hui.";
-          if (val > 800) return "Lumière très forte, attention aux brûlures.";
-          return "Luminosité normale.";
-        case 'rain':
-          if (val > 5) return "Pluie détectée récemment, inutile d'arroser.";
-          return "Pas de pluie récente, arrosage peut être nécessaire.";
-        default:
-          return null;
-      }
-    }
+    
+
   }
 };
 </script>

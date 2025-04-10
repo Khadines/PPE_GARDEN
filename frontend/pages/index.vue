@@ -37,7 +37,7 @@ export default {
             console.log(response.message);
         },
         goToPPE() {
-            this.$router.push('/ppe');
+            this.$router.push('/ppe1');
         },
         explore() {
             this.$router.push('/explore');
