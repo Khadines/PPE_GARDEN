@@ -104,41 +104,51 @@ void checkValveCommands() {
     if (valve1) {
       mySerial2.println("VALVE:1:OPEN");
       Serial.println("Commande envoyée à la DUE: VALVE:1:OPEN");
+      delay(10);
     } else {
       mySerial2.println("VALVE:1:CLOSED");
       Serial.println("Commande envoyée à la DUE: VALVE:1:CLOSED");
+      delay(10);
     }
 
     if (valve2) {
       mySerial2.println("VALVE:2:OPEN");
       Serial.println("Commande envoyée à la DUE: VALVE:2:OPEN");
+      delay(10);
     } else {
       mySerial2.println("VALVE:2:CLOSED");
       Serial.println("Commande envoyée à la DUE: VALVE:2:CLOSED");
+      delay(10);
     }
 
     if (valve3) {
       mySerial2.println("VALVE:3:OPEN");
       Serial.println("Commande envoyée à la DUE: VALVE:3:OPEN");
+      delay(10);
     } else {
       mySerial2.println("VALVE:3:CLOSED");
       Serial.println("Commande envoyée à la DUE: VALVE:3:CLOSED");
+      delay(10);
     }
 
     if (valve4) {
       mySerial2.println("VALVE:4:OPEN");
       Serial.println("Commande envoyée à la DUE: VALVE:4:OPEN");
+      delay(10);
     } else {
       mySerial2.println("VALVE:4:CLOSED");
       Serial.println("Commande envoyée à la DUE: VALVE:4:CLOSED");
+      delay(10);
     }
 
     if (valve5) {
       mySerial2.println("VALVE:5:OPEN");
       Serial.println("Commande envoyée à la DUE: VALVE:5:OPEN");
+      delay(10);
     } else {
       mySerial2.println("VALVE:5:CLOSED");
       Serial.println("Commande envoyée à la DUE: VALVE:5:CLOSED");
+      delay(10);
     }
 
   } else {
