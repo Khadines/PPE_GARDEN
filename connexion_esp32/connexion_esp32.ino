@@ -4,8 +4,8 @@
 #include <HardwareSerial.h>
 
 // Configuration WiFi
-const char* ssid = "iPhone 13 Pro de Ines";
-const char* password = "honeyy45";  
+const char* ssid = "1234";
+const char* password = "1234678";  
 const char* serverUrl = "http://172.20.10.3:8000/data";  // Endpoint for sensor data
 const char* valveStatusUrl = "http://172.20.10.3:8000/valves";  // Endpoint for valve status
 
@@ -15,7 +15,7 @@ const char* valveStatusUrl = "http://172.20.10.3:8000/valves";  // Endpoint for 
 HardwareSerial mySerial2(2);  // UART2
 
 // Définition des capteurs
-#define MOISTURE_SENSOR_PIN 34  // Capteur d'humidité
+// #define MOISTURE_SENSOR_PIN 34  // Capteur d'humidité
 #define TEMPERATURE_SENSOR_PIN 35  // Capteur de température
 #define LIGHT_SENSOR_PIN 32      // Capteur de lumière 
 #define RAINGAUGE_SENSOR_PIN 33  // Capteur de pluie 
@@ -71,7 +71,10 @@ void loop() {
   if (mySerial2.available()) {
     String message = mySerial2.readStringUntil('\n');
     Serial.println("Reçu de la DUE: " + message);
-    // Ici vous pouvez traiter les messages remontant de la DUE
+    if (message.startsWith("MOISTURE:")) {
+      sendMoistureData(message);
+    }
+    // Traite les messages remontant de la DUE
   }
 
   // Lire et envoyer les données des capteurs
@@ -168,8 +171,8 @@ void sendSensorData() {
     //float temperatureValue = analogRead(TEMPERATURE_SENSOR_PIN) * 0.322; // Conversion en °C
     //int lightValue = analogRead(LIGHT_SENSOR_PIN);        // 0-4095 (sombre-lumineux)
     //float rainValue = tipCount * MM_PER_TIP;              // Calcul pluie (mm)
-    int moistureValue = 67;
-    float temperatureValue = 23;
+    //int moistureValue = 67;
+    float temperatureValue = 17;
     int lightValue = 2500;
     float rainValue = random(0, 5);    
     tipCount = 0;  // Réinitialisation après lecture
@@ -177,7 +180,7 @@ void sendSensorData() {
     // Création du JSON avec les 4 capteurs
     StaticJsonDocument<256> jsonDoc;
     JsonObject sensors = jsonDoc.createNestedObject("sensors");
-    sensors["moisture"] = moistureValue;
+    //sensors["moisture"] = moistureValue;
     sensors["temperature"] = temperatureValue;
     sensors["light"] = lightValue;
     sensors["rain"] = rainValue;
@@ -202,4 +205,36 @@ void sendSensorData() {
   } else {
     Serial.println("⚠️ Wi-Fi déconnecté !");
   }
+}
+
+void sendMoistureData(String data) {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  int colonIndex = data.indexOf(':');
+  String values = data.substring(colonIndex + 1);
+
+  int firstComma = values.indexOf(',');
+  int secondComma = values.indexOf(',', firstComma + 1);
+
+  int val1 = values.substring(0, firstComma).toInt();
+  int val2 = values.substring(firstComma + 1, secondComma).toInt();
+  int val3 = values.substring(secondComma + 1).toInt();
+
+  HTTPClient http;
+  http.begin(serverUrl);  // ton URL FastAPI pour recevoir l’humidité
+
+  http.addHeader("Content-Type", "application/json");
+  DynamicJsonDocument doc(256);
+  doc["moisture1"] = val1;
+  doc["moisture2"] = val2;
+  doc["moisture3"] = val3;
+
+  String requestBody;
+  serializeJson(doc, requestBody);
+  int httpCode = http.POST(requestBody);
+
+  Serial.print("Code retour FastAPI (humid): ");
+  Serial.println(httpCode);
+  http.end();
+  
 }
